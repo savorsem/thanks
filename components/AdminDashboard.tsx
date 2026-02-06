@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { AppConfig, Module, UserProgress, UserRole, Material, Stream, Lesson, HomeworkType, ArenaScenario, CalendarEvent, EventType, AIProviderId } from '../types';
@@ -441,7 +440,45 @@ create policy "Users can update own profile." on profiles for update using ( tru
     </div>
   );
 
-  // --- CRUD RENDERERS ---
+  const renderGenericList = <T extends { id: string, title: string }>(
+      title: string,
+      items: T[],
+      onUpdate: (items: T[]) => void,
+      newItemFactory: () => T,
+      renderItem: (item: T, idx: number, update: (u: Partial<T>) => void) => React.ReactNode
+  ) => {
+      const handleAdd = () => onUpdate([...items, newItemFactory()]);
+      const handleDelete = (idx: number) => {
+          if (confirm('Удалить элемент?')) {
+              const newItems = [...items];
+              newItems.splice(idx, 1);
+              onUpdate(newItems);
+          }
+      };
+      const handleItemUpdate = (idx: number, updates: Partial<T>) => {
+          const newItems = [...items];
+          newItems[idx] = { ...newItems[idx], ...updates };
+          onUpdate(newItems);
+      };
+
+      return (
+          <div className="space-y-6">
+              <SectionHeader 
+                  title={title} 
+                  action={<Button onClick={handleAdd} className="!py-2 !px-4 !text-xs">+ Добавить</Button>} 
+              />
+              <div className="grid grid-cols-1 gap-4">
+                  {items.map((item, idx) => (
+                      <div key={item.id} className="glass-panel p-4 rounded-[1.5rem] border border-white/5 relative group">
+                          <button onClick={() => handleDelete(idx)} className="absolute top-4 right-4 w-8 h-8 bg-red-500/10 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors z-10">✕</button>
+                          {renderItem(item, idx, (u) => handleItemUpdate(idx, u))}
+                      </div>
+                  ))}
+                  {items.length === 0 && <div className="text-center text-white/20 py-10 border-2 border-dashed border-white/5 rounded-3xl">Список пуст</div>}
+              </div>
+          </div>
+      );
+  };
 
   const renderCourse = () => {
     const handleAddModule = () => {
@@ -655,46 +692,6 @@ create policy "Users can update own profile." on profiles for update using ( tru
             )}
         </div>
     );
-  };
-
-  const renderGenericList = <T extends { id: string, title: string }>(
-      title: string,
-      items: T[],
-      onUpdate: (items: T[]) => void,
-      newItemFactory: () => T,
-      renderItem: (item: T, idx: number, update: (u: Partial<T>) => void) => React.ReactNode
-  ) => {
-      const handleAdd = () => onUpdate([...items, newItemFactory()]);
-      const handleDelete = (idx: number) => {
-          if (confirm('Удалить элемент?')) {
-              const newItems = [...items];
-              newItems.splice(idx, 1);
-              onUpdate(newItems);
-          }
-      };
-      const handleItemUpdate = (idx: number, updates: Partial<T>) => {
-          const newItems = [...items];
-          newItems[idx] = { ...newItems[idx], ...updates };
-          onUpdate(newItems);
-      };
-
-      return (
-          <div className="space-y-6">
-              <SectionHeader 
-                  title={title} 
-                  action={<Button onClick={handleAdd} className="!py-2 !px-4 !text-xs">+ Добавить</Button>} 
-              />
-              <div className="grid grid-cols-1 gap-4">
-                  {items.map((item, idx) => (
-                      <div key={item.id} className="glass-panel p-4 rounded-[1.5rem] border border-white/5 relative group">
-                          <button onClick={() => handleDelete(idx)} className="absolute top-4 right-4 w-8 h-8 bg-red-500/10 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors z-10">✕</button>
-                          {renderItem(item, idx, (u) => handleItemUpdate(idx, u))}
-                      </div>
-                  ))}
-                  {items.length === 0 && <div className="text-center text-white/20 py-10 border-2 border-dashed border-white/5 rounded-3xl">Список пуст</div>}
-              </div>
-          </div>
-      );
   };
 
   const renderMaterials = () => renderGenericList(
@@ -997,5 +994,6 @@ create policy "Users can update own profile." on profiles for update using ( tru
                 </div>
             )}
         </div>
-    );
-  };
+    </div>
+  );
+};
